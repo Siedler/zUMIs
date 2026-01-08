@@ -205,9 +205,11 @@ if( opt$counting_opts$introns ){
   mapList<-list("exon"="exon")
 }
 
+# directory to hold per-chunk debug snapshots
+chunk_debug_dir <- file.path(opt$out_dir, "zUMIs_output", "debug_chunks")
+if(!dir.exists(chunk_debug_dir)) dir.create(chunk_debug_dir, recursive = TRUE)
 
 ########################## assign reads to UB & GENE
-
 for(i in unique(bccount$chunkID)){
      print( paste( "Working on barcode chunk", i, "out of",length(unique(bccount$chunkID)) ))
      print( paste( "Processing",length(bccount[chunkID==i]$XC), "barcodes in this chunk..." ))
@@ -217,29 +219,42 @@ for(i in unique(bccount$chunkID)){
                               chunk    = i,
                               cores    = opt$num_threads)
 
+     # persist intermediate objects for debugging
+     saveRDS(reads, file = file.path(chunk_debug_dir, paste0("reads_chunk_", i, ".rds")))
+
+
      tmp<-collectCounts(  reads =reads,
                           bccount=bccount[chunkID==i],
                           subsample.splits=subS[which(max(bccount[chunkID==i]$n) >= subS[,1]), , drop = FALSE],
                           mapList=mapList
                         )
 
+     saveRDS(tmp, file = file.path(chunk_debug_dir, paste0("tmp_chunk_", i, ".rds")))
+
      if(i==1){
        allC<-tmp
     }else{
        allC<-bindList(alldt=allC,newdt=tmp)
     }
+
+    saveRDS(allC, file = file.path(chunk_debug_dir, paste0("allC_after_chunk_", i, ".rds")))
 }
+
+saveRDS(allC, file = paste0(opt$out_dir,"/zUMIs_output/stats/",opt$project,".allCounts.rds"))
 
 if( UMIcheck == "UMI"  ){
   if(smart3_flag){
+    print("Smart-seq3 data detected, generating internal read count matrix...")
     final<-list( umicount  = convert2countM(alldt=allC,what="umicount"),
                  readcount = convert2countM(allC,"readcount"),
                  readcount_internal = convert2countM(allC,"readcount_internal"))
   }else{
+    print("UMI data detected, generating UMI count matrix...")
     final<-list( umicount  = convert2countM(alldt=allC,what="umicount"),
                  readcount = convert2countM(allC,"readcount"))
   }
 }else{
+  print("Non-UMI data detected, generating read count matrix...")
   final<-list(readcount = convert2countM(allC,"readcount"))
 }
 
