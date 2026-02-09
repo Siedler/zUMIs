@@ -237,20 +237,20 @@ if [[ "${whichStage}" == "Filtering" ]] ; then
   tmpMerge=${outdir}/zUMIs_output/.tmpMerge/
 
   if [[ ${f} =~ \.gz$ ]] ; then
-      ${pigzexc} -dc ${f} | head -n 4000000 | ${pigzexc} > ${tmpMerge}/${project}.1mio.check.fq.gz
-      smallsize=$(stat --printf="%s" ${tmpMerge}/${project}.1mio.check.fq.gz)
-      rm ${tmpMerge}/${project}.1mio.check.fq.gz
-      nreads=$(expr ${fullsize} \* 1000000 / ${smallsize})
+      echo "Counting reads in ${f}..."
+      lines=$(${pigzexc} -dc "${f}" | wc -l)
+      nreads=$(expr ${lines} / 4)
+      echo "Total reads in ${f}: ${nreads}"
 
       for i in ${fqfiles} ; do bash ${zumisdir}/splitfq.sh ${i} ${pigzexc} ${num_threads} ${tmpMerge} splitfqgz ${project} ${nreads} & done
       wait
       pref=$(basename ${f} .gz)
       l=$(ls ${tmpMerge}${pref}* | sed "s|${tmpMerge}${pref}||" | sed 's/.gz//')
   else
-      head -n 4000000 ${f} > ${tmpMerge}/${project}.1mio.check.fq
-      smallsize=$(stat --printf="%s" ${tmpMerge}/${project}.1mio.check.fq)
-      rm ${tmpMerge}/${project}.1mio.check.fq
-      nreads=$(expr ${fullsize} \* 1000000 / ${smallsize})
+      echo "Counting reads in ${f}..."
+      lines=$(wc -l < "${f}")
+      nreads=$(expr "${lines}" / 4)
+      echo "Total reads in ${f}: ${nreads}"
 
       for i in ${fqfiles} ; do bash ${zumisdir}/splitfq.sh ${i} ${pigzexc} ${num_threads} ${tmpMerge} splitfq ${project} ${nreads} & done
       wait
