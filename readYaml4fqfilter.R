@@ -14,5 +14,6 @@ print( paste(inp$filter_cutoffs$BC_filter))
 print( paste(inp$filter_cutoffs$UMI_filter))
 print( paste(sapply(inp$sequence_files,function(x) { paste(x$find_pattern)}),collapse=" "))
 print( paste(sapply(inp$sequence_files,function(x) { paste(x$correct_frameshift)}),collapse=" "))
+print( inp$tmp_dir)
 
 q()

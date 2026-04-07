@@ -40,6 +40,11 @@ function usage () {
 ## Program path ##
 	-d  <zUMIs-dir>   	 : Directory containing zUMIs scripts.  Default: path to this script.
 
+## Temporary directory ##
+	-t  <tmp-dir>          : Path to a directory for temporary files (.tmpMerge, .tmpMap).
+	                         Useful on HPC clusters to redirect temp files to scratch storage.
+	                         Default: <out_dir>/zUMIs_output
+
 ## Miniconda environment
 
   -c : Use zUMIs dependencies in the preinstalled conda enviroment.
@@ -53,10 +58,11 @@ EOF
 zumisdir=$(dirname $(readlink -f $0))
 
 
-while getopts ":y:d:ch" options; do #Putting <:> between keys implies that they can not be called without an argument.
+while getopts ":y:d:t:ch" options; do #Putting <:> between keys implies that they can not be called without an argument.
   case ${options} in
   y ) yaml=${OPTARG};;
   d ) zumisdir=${OPTARG};;
+  t ) tmpdir=${OPTARG};;
   c ) conda=true;;
   h ) usage
           exit 1;;
@@ -185,6 +191,16 @@ if [[ ! -d ${outdir} ]] ; then
   fi
 fi
 
+# set tmpdir default and write to run YAML so downstream scripts can read it
+if [[ -z "${tmpdir}" ]] ; then
+    tmpdir=${outdir}/zUMIs_output
+fi
+if grep -q 'tmp_dir:' ${yaml} ; then
+    sed -i "s|tmp_dir:.*|tmp_dir: ${tmpdir}|" ${yaml}
+else
+    echo "tmp_dir: ${tmpdir}" >> ${yaml}
+fi
+
 echo -e "\n\n You provided these parameters:
  YAML file:	${yaml_orig}
  zUMIs directory:		${zumisdir}
@@ -193,6 +209,7 @@ echo -e "\n\n You provided these parameters:
  pigz executable		${pigzexc}
  Rscript executable		${Rexc}
  RAM limit:   ${mem_limit}
+ Temporary directory:   ${tmpdir}
  zUMIs version ${vers} \n\n" | tee "${outdir}/${project}.zUMIs_runlog.txt"
 date
 
@@ -225,7 +242,7 @@ outdir=$(grep 'out_dir' ${yaml} | awk '{print $2}')
 [ -d ${outdir}/zUMIs_output/ ] || mkdir -p ${outdir}/zUMIs_output/
 [ -d ${outdir}/zUMIs_output/expression ] || mkdir -p ${outdir}/zUMIs_output/expression
 [ -d ${outdir}/zUMIs_output/stats ] || mkdir -p ${outdir}/zUMIs_output/stats
-[ -d ${outdir}/zUMIs_output/.tmpMerge ] || mkdir -p ${outdir}/zUMIs_output/.tmpMerge
+[ -d ${tmpdir}/.tmpMerge ] || mkdir -p ${tmpdir}/.tmpMerge
 
 
 if [[ "${whichStage}" == "Filtering" ]] ; then
@@ -234,7 +251,7 @@ if [[ "${whichStage}" == "Filtering" ]] ; then
   f=$(cut -d' ' -f1 <(echo ${fqfiles})) # the first fastq file to determine gzip status
   fullsize=$(stat -L --printf="%s" ${f})
 
-  tmpMerge=${outdir}/zUMIs_output/.tmpMerge/
+  tmpMerge=${tmpdir}/.tmpMerge/
 
   if [[ ${f} =~ \.gz$ ]] ; then
       echo "Counting reads in ${f}..."

@@ -31,7 +31,7 @@ open(YL,"$rscriptexc $zumisdir/readYaml4fqfilter.R $yml |");
 @arg=<YL>;
 close YL;
 %argHash;
-@params=("filenames", "seqtype", "outdir", "StudyName", "num_threads", "BCfilter", "UMIfilter", "find_pattern", "correct_frameshift");
+@params=("filenames", "seqtype", "outdir", "StudyName", "num_threads", "BCfilter", "UMIfilter", "find_pattern", "correct_frameshift", "tmp_dir");
 
 
 for($i=0;$i<=$#params;$i++){
@@ -48,6 +48,7 @@ $BCfilter = distilReads::argClean($argHash{"BCfilter"});
 $UMIfilter = distilReads::argClean($argHash{"UMIfilter"});
 $pattern = distilReads::argClean($argHash{"find_pattern"});
 $frameshift = distilReads::argClean($argHash{"correct_frameshift"});
+$tmpdir = distilReads::argClean($argHash{"tmp_dir"});
 
 #print($pattern);
 #demult_HEK_r1.fq.gz; demult_HEK_r2.fq.gz;ACTGCTGTA
@@ -62,11 +63,12 @@ chomp($BCfilter);
 chomp($UMIfilter);
 chomp($pattern);
 chomp($frameshift);
+chomp($tmpdir);
 chomp($zumisversion);
 $isPass="pass";
 
-$outbcstats = "$outdir/zUMIs_output/.tmpMerge/$StudyName.$tmpPrefix.BCstats.txt";
-$outbam = "$outdir/zUMIs_output/.tmpMerge/$StudyName.$tmpPrefix.filtered.tagged.bam";
+$outbcstats = "$tmpdir/.tmpMerge/$StudyName.$tmpPrefix.BCstats.txt";
+$outbam = "$tmpdir/.tmpMerge/$StudyName.$tmpPrefix.filtered.tagged.bam";
 
 # Make and open all the file handles
 %file_handles = distilReads::makeFileHandles($f,$st,$pattern,$frameshift);
@@ -84,14 +86,14 @@ for($i=0;$i<=$#keys;$i++){
     chomp($oriBase);
 
 		#change the file name to temporary prefix for its chunk
-		$chunk = "$outdir/zUMIs_output/.tmpMerge/$oriBase$tmpPrefix.gz";
+		$chunk = "$tmpdir/.tmpMerge/$oriBase$tmpPrefix.gz";
     open $fh, '-|', $pigz, '-dc', $chunk || die "Couldn't open file ".$chunk.". Check permissions!\n Check if it is differently zipped then .gz\n\n";
   }else {
 
 		$oriF = $fp[0];
 		$oriBase = `basename $oriF'`;
 		#change the file name to temporary prefix for its chunk
-		$chunk = "$outdir/zUMIs_output/.tmpMerge/$oriBase$tmpPrefix.gz";
+		$chunk = "$tmpdir/.tmpMerge/$oriBase$tmpPrefix.gz";
 
     open $fh, "<", $chunk || die "Couldn't open file ".$chunk.". Check permissions!\n Check if it is differently zipped then .gz\n\n";
   }

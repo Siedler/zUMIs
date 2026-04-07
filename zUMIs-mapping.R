@@ -17,7 +17,7 @@ if(is.null(inp$mem_limit)){
 }
 
 # collect filtered bam files ----------------------------------------------
-tmpfolder <- paste(inp$out_dir,"/zUMIs_output/.tmpMerge/",sep="")
+tmpfolder <- paste0(inp$tmp_dir,"/.tmpMerge/")
 if(inp$which_Stage == "Filtering"){
   filtered_bams <- list.files(path = tmpfolder, pattern=paste(inp$project,".*.filtered.tagged.bam$",sep=""),full.names=T)
   #also merge the unmapped bam files:
@@ -121,7 +121,7 @@ if(inp$counting_opts$twoPass==TRUE){
 
 #finally, run STAR
 if(num_star_instances>1 & inp$which_Stage == "Filtering"){
-  map_tmp_dir <- paste0(inp$out_dir,"/zUMIs_output/.tmpMap/")
+  map_tmp_dir <- paste0(inp$tmp_dir,"/.tmpMap/")
   dir.create(path = map_tmp_dir,showWarnings = FALSE)
   input_split <- split(filtered_bams, ceiling(seq_along(filtered_bams) / ceiling(length(filtered_bams) / num_star_instances)))
   input_split <- sapply(input_split, paste0, collapse = ",")
