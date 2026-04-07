@@ -146,7 +146,7 @@ if(num_star_instances>1 & inp$which_Stage == "Filtering"){
   system(copy_sjs)
   system(paste(merge_logs,"&",merge_bams,"&",merge_txbams,"& wait"))
   print("Cleaning up temporary files after parallel STAR mapping...")
-  # system(paste0("rm -r ", map_tmp_dir, "tmp.", inp$project, ".*"))
+  system(paste0("rm -r ", map_tmp_dir, "tmp.", inp$project, ".*"))
 }else{
   STAR_command <- paste(STAR_command,
     "--readFilesIn",paste0(filtered_bams,collapse=","),
@@ -163,6 +163,6 @@ if(num_star_instances>1 & inp$which_Stage == "Filtering"){
 #clean up chunked bam files
 if(inp$which_Stage == "Filtering"){
   print("Cleaning up temporary files...")
-  # system(paste0("rm ",tmpfolder,"/",inp$project,".*"))
+  system(paste0("rm ",tmpfolder,"/",inp$project,".*"))
 }
 q()
